@@ -1,4 +1,4 @@
-module github.com/dstgo/modparser
+module github.com/dstgo/luaparser
 
 go 1.22
 
