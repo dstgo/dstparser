@@ -1,6 +1,11 @@
 package modparser
 
-import lua "github.com/yuin/gopher-lua"
+import (
+	"bytes"
+	"github.com/mitchellh/mapstructure"
+	lua "github.com/yuin/gopher-lua"
+	"text/template"
+)
 
 type LevelOverrideItem struct {
 	Name  string `mapstructure:"name"`
@@ -15,21 +20,21 @@ type LevelDataOverrides struct {
 	Desc                  string  `mapstructure:"desc"`
 	Location              string  `mapstructure:"location"`
 	PlayStyle             string  `mapstructure:"playstyle"`
-	HideMiniMap           bool    `mapstructure:"hide_minimap"`
+	HideMiniMap           bool    `mapstructure:"hideminimap"`
 	MaxPlayerListPosition float64 `mapstructure:"max_playerlist_position"`
 	MinPlayerListPosition float64 `mapstructure:"min_playerlist_position"`
 	NumRandomSetPieces    int     `mapstructure:"numrandom_set_pieces"`
 	OverrideLevelString   bool    `mapstructure:"override_level_string"`
 
 	// setting
-	SettingId   string `mapstructure:"setting_id"`
-	SettingName string `mapstructure:"setting_name"`
-	SettingDesc string `mapstructure:"setting_desc"`
+	SettingId   string `mapstructure:"settings_id"`
+	SettingName string `mapstructure:"settings_name"`
+	SettingDesc string `mapstructure:"settings_desc"`
 
 	// worldgen
-	worldGenId   string `mapstructure:"worldgen_id"`
-	worldGenName string `mapstructure:"worldgen_name"`
-	worldGenDesc string `mapstructure:"worldgen_desc"`
+	WorldGenId   string `mapstructure:"worldgen_id"`
+	WorldGenName string `mapstructure:"worldgen_name"`
+	WorldGenDesc string `mapstructure:"worldgen_desc"`
 
 	// meta info
 	Overrides           []LevelOverrideItem `mapstructure:"overrides"`
@@ -72,9 +77,9 @@ func ParseLevelDataOverrides(luaScript string) (LevelDataOverrides, error) {
 	levelDataOverrides.SettingName = overrideTableL.GetString("settings_name")
 
 	// world gen
-	levelDataOverrides.worldGenId = overrideTableL.GetString("worldgen_id")
-	levelDataOverrides.worldGenDesc = overrideTableL.GetString("worldgen_desc")
-	levelDataOverrides.worldGenName = overrideTableL.GetString("worldgen_name")
+	levelDataOverrides.WorldGenId = overrideTableL.GetString("worldgen_id")
+	levelDataOverrides.WorldGenDesc = overrideTableL.GetString("worldgen_desc")
+	levelDataOverrides.WorldGenName = overrideTableL.GetString("worldgen_name")
 
 	// world override options
 	if overrideTableL.GetTable("overrides") != nil {
@@ -122,4 +127,103 @@ func ParseLevelDataOverrides(luaScript string) (LevelDataOverrides, error) {
 	}
 
 	return levelDataOverrides, nil
+}
+
+const masterLevelOverrides = `
+return {
+  desc={{ t .desc }},
+  hideminimap={{ t .hideminimap }},
+  id={{ t .id }},
+  location={{ t .location }},
+  max_playlist_position={{ t .max_playlist_position }},
+  min_playlist_position={{ t .min_playlist_position }},
+  name={{ t .name }},
+  numrandom_set_pieces={{ t .numrandom_set_pieces }},
+  override_level_string={{ t .override_level_string }},
+  overrides={ {{ range $index, $value := .overrides }}
+    {{$value.Name }}={{ t $value.Value }}, {{ end }}
+  },
+  playstyle={{ t .playstyle }},
+  random_set_pieces={ {{ range $index, $value := .random_set_pieces }}
+    {{ t $value }}, {{ end }}
+  },
+  required_prefabs={ {{ range $index, $value := .required_prefabs }}
+    {{ t $value }}, {{ end }}
+  },
+  required_setpieces={ {{ range $index, $value := .required_setpieces }}
+    {{ t $value }}, {{ end }}
+  },
+  settings_desc={{ t .settings_desc }},
+  settings_id={{ t .settings_id }},
+  settings_name={{ t .settings_name }},
+  substitutes={ {{ range $index, $value := .substitutes }}
+    {{ t $value }}, {{ end }}
+  },
+  version={{ t .version }},
+  worldgen_desc={{ t .worldgen_desc }},
+  worldgen_id={{ t .worldgen_id }},
+  worldgen_name={{ t .worldgen_name }},
+}
+`
+
+const caveLevelOverrides = `
+return {
+  background_node_range={ {{ range $index, $value := .background_node_range }}
+    {{ t $value }}, {{ end }}
+  },
+  desc={{ t .desc }},
+  hideminimap={{ t .hideminimap }},
+  id={{ t .id }},
+  location={{ t .location }},
+  max_playlist_position={{ t .max_playlist_position }},
+  min_playlist_position={{ t .min_playlist_position }},
+  name={{ t .name }},
+  numrandom_set_pieces={{ t .numrandom_set_pieces }},
+  override_level_string={{ t .override_level_string }},
+  overrides={ {{ range $index, $value := .overrides }}
+    {{$value.Name }}={{ t $value.Value }}, {{ end }}
+  },
+  required_prefabs={  {{ range $index, $value := .required_prefabs }}
+    {{ t $value }}, {{ end }}
+  },
+  settings_desc={{ t .settings_desc }},
+  settings_id={{ t .settings_id }},
+  settings_name={{ t .settings_name }},
+  substitutes={ {{ range $index, $value := .required_prefabs }}
+    {{ t $value }}, {{ end }}
+  },
+  version={{ t .version }},
+  worldgen_desc={{ t .worldgen_desc }},
+  worldgen_id={{ t .worldgen_id }},
+  worldgen_name={{ t .worldgen_name }}
+}
+`
+
+func ToMasterLevelDataOverridesLua(overrides LevelDataOverrides) (string, error) {
+	return toLevelDataOverridesLua(masterLevelOverrides, overrides)
+}
+
+func ToCaveLevelDataOverridesLua(overrides LevelDataOverrides) (string, error) {
+	return toLevelDataOverridesLua(caveLevelOverrides, overrides)
+}
+
+func toLevelDataOverridesLua(tmpl string, val any) (string, error) {
+	var data map[string]any
+	if err := mapstructure.Decode(val, &data); err != nil {
+		return "", err
+	}
+	templ, err := template.New("leveloverrides").
+		Funcs(map[string]any{"t": t}).
+		Parse(tmpl)
+
+	if err != nil {
+		return "", err
+	}
+
+	buffer := bytes.NewBuffer(nil)
+	if err := templ.Execute(buffer, data); err != nil {
+		return "", err
+	}
+
+	return buffer.String(), nil
 }

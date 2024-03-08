@@ -1,6 +1,7 @@
 package modparser
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -24,4 +25,36 @@ func TestParseLevelDataOverridesMaster(t *testing.T) {
 
 	assert.NotEmpty(t, overrides.Id)
 	t.Log(overrides)
+}
+
+func TestToMasterLevelDataOverridesLua(t *testing.T) {
+	bytes, err := os.ReadFile("testdata/cluster/leveldataoverride.cave.lua")
+	assert.Nil(t, err)
+	overrides, err := ParseLevelDataOverrides(string(bytes))
+	assert.Nil(t, err)
+
+	assert.NotEmpty(t, overrides.Id)
+	t.Log(overrides)
+
+	overridesLua, err := ToMasterLevelDataOverridesLua(overrides)
+	assert.Nil(t, err)
+	t.Log(err)
+
+	fmt.Println(overridesLua)
+}
+
+func TestToCaveLevelDataOverridesLua(t *testing.T) {
+	bytes, err := os.ReadFile("testdata/cluster/leveldataoverride.cave.lua")
+	assert.Nil(t, err)
+	overrides, err := ParseLevelDataOverrides(string(bytes))
+	assert.Nil(t, err)
+
+	assert.NotEmpty(t, overrides.Id)
+	t.Log(overrides)
+
+	overridesLua, err := ToCaveLevelDataOverridesLua(overrides)
+	assert.Nil(t, err)
+	t.Log(err)
+
+	fmt.Println(overridesLua)
 }
