@@ -1,18 +1,21 @@
 package modparser
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	lua "github.com/yuin/gopher-lua"
+	"strings"
+	"text/template"
 )
 
 // ParseModInfo returns the parsed modinfo from lua script
 func ParseModInfo(luaScript string) (ModInfo, error) {
-	return ParseModInfoWithEnv("", "", luaScript)
+	return ParseModInfoWithEnv(luaScript, "", "")
 }
 
 // ParseModInfoWithEnv parse mod info from lua script with mod environment variables.
-func ParseModInfoWithEnv(folderName, locale, luaScript string) (ModInfo, error) {
+func ParseModInfoWithEnv(luaScript, folderName, locale string) (ModInfo, error) {
 	l := lua.NewState()
 	defer l.Close()
 
@@ -140,14 +143,7 @@ func parseModOptions(options *lua.LTable) ([]ModOption, error) {
 
 		// default value
 		defaultValue := LTable(optTable).Get("default")
-		switch defaultValue.Type() {
-		case lua.LTString:
-			modOption.Default = lua.LVAsString(defaultValue)
-		case lua.LTNumber:
-			modOption.Default = float64(lua.LVAsNumber(defaultValue))
-		case lua.LTBool:
-			modOption.Default = lua.LVAsBool(defaultValue)
-		}
+		modOption.Default = judgeOptionValue(defaultValue)
 
 		if loptTable.GetTable("tags") != nil {
 			loptTable.GetTable("tags").T().ForEach(func(key lua.LValue, value lua.LValue) {
@@ -181,14 +177,7 @@ func parseModOptionItems(optTable *lua.LTable) []ModOptionItem {
 		modItem.Description = itemTable.GetString("description")
 
 		dataValue := itemTable.Get("data")
-		switch dataValue.Type() {
-		case lua.LTBool:
-			modItem.Data = lua.LVAsBool(dataValue)
-		case lua.LTNumber:
-			modItem.Data = float64(lua.LVAsNumber(dataValue))
-		case lua.LTString:
-			modItem.Data = lua.LVAsString(dataValue)
-		}
+		modItem.Data = judgeOptionValue(dataValue)
 
 		// if it has no description, use the string of data
 		if len(modItem.Description) == 0 {
@@ -199,4 +188,82 @@ func parseModOptionItems(optTable *lua.LTable) []ModOptionItem {
 	})
 
 	return items
+}
+
+// ParseModOverrides returns the mod override options from modoverrides.lua
+func ParseModOverrides(luaScript string) ([]ModOverRideOption, error) {
+	l := lua.NewState()
+	if err := l.DoString(luaScript); err != nil {
+		return nil, err
+	}
+	var options []ModOverRideOption
+
+	overrideTable := l.ToTable(-1)
+	// options
+	overrideTable.ForEach(func(key lua.LValue, value lua.LValue) {
+		if key.Type() != lua.LTString || value == lua.LNil || !strings.Contains(key.String(), "workshop-") {
+			return
+		}
+
+		var modOverride ModOverRideOption
+		table := LTable(value.(*lua.LTable))
+
+		names := strings.Split(key.String(), "-")
+		if len(names) > 1 {
+			modOverride.Id = names[1]
+		}
+		modOverride.Enabled = table.GetBool("enabled")
+
+		// items
+		var items []ModOverRideOptionItem
+		if table.GetTable("configuration_options") != nil {
+			table.GetTable("configuration_options").T().ForEach(func(name lua.LValue, data lua.LValue) {
+				var item ModOverRideOptionItem
+				item.Name = name.String()
+				item.Value = judgeOptionValue(data)
+				items = append(items, item)
+			})
+		}
+
+		modOverride.Items = items
+		options = append(options, modOverride)
+	})
+
+	return options, nil
+}
+
+const modOverrideTmpl = `return {   {{ range $index, $option := . }}
+    ["{{ $option.Id }}"] = {
+        ["enabled"] = {{ $option.Enabled }},
+        ["configuration_options"] = { {{ range $index, $item := $option.Items }}
+            ["{{ $item.Name }}"] = {{ process $item.Value }}, {{ end }}
+        }
+    }, {{ end }}
+}`
+
+func process(val any) (any, error) {
+	switch val.(type) {
+	case string:
+		return fmt.Sprintf(`"%s"`, val), nil
+	}
+	return val, nil
+}
+
+// ToModOverrideLua return the lua representation of the modOverride options,
+// the format is same as modoverride.lua
+func ToModOverrideLua(options []ModOverRideOption) (string, error) {
+	templ := template.New("modoverride").Funcs(map[string]any{
+		"process": process,
+	})
+
+	templ, err := templ.Parse(modOverrideTmpl)
+	if err != nil {
+		return "", err
+	}
+
+	buffer := bytes.NewBuffer(nil)
+	if err := templ.Execute(buffer, options); err != nil {
+		return "", err
+	}
+	return buffer.String(), nil
 }

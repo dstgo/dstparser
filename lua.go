@@ -58,3 +58,16 @@ func (t *Table) GetTable(key string) *Table {
 func (t *Table) T() *lua.LTable {
 	return (*lua.LTable)(t)
 }
+
+func judgeOptionValue(value lua.LValue) any {
+	switch value.Type() {
+	default:
+		return "unknown type"
+	case lua.LTString:
+		return lua.LVAsString(value)
+	case lua.LTNumber:
+		return float64(lua.LVAsNumber(value))
+	case lua.LTBool:
+		return lua.LVAsBool(value)
+	}
+}

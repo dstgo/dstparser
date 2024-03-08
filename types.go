@@ -54,3 +54,14 @@ type ModOptionItem struct {
 	Description string `mapstructure:"description"`
 	Data        any    `mapstructure:"data"`
 }
+
+type ModOverRideOptionItem struct {
+	Name  string `mapstructure:"name"`
+	Value any    `mapstructure:"value"`
+}
+
+type ModOverRideOption struct {
+	Id      string                  `mapstructure:"id"`
+	Enabled bool                    `mapstructure:"enabled"`
+	Items   []ModOverRideOptionItem `mapstructure:"options"`
+}
