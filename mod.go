@@ -304,12 +304,12 @@ const modOverrideTmpl = `return {   {{ range $index, $option := . }}
     ["{{ $option.Id }}"] = {
         ["enabled"] = {{ $option.Enabled }},
         ["configuration_options"] = { {{ range $index, $item := $option.Items }}
-            ["{{ $item.Name }}"] = {{ process $item.Value }}, {{ end }}
+            ["{{ $item.Name }}"] = {{ t $item.Value }}, {{ end }}
         }
     }, {{ end }}
 }`
 
-func process(val any) (any, error) {
+func t(val any) (any, error) {
 	switch val.(type) {
 	case string:
 		return fmt.Sprintf(`"%s"`, val), nil
@@ -321,7 +321,7 @@ func process(val any) (any, error) {
 // the format is same as modoverride.lua
 func ToModOverrideLua(options []ModOverRideOption) (string, error) {
 	templ := template.New("modoverride").Funcs(map[string]any{
-		"process": process,
+		"t": t,
 	})
 
 	templ, err := templ.Parse(modOverrideTmpl)
