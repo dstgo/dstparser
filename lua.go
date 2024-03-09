@@ -1,4 +1,4 @@
-package modparser
+package dstparser
 
 import lua "github.com/yuin/gopher-lua"
 

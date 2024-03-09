@@ -1,4 +1,4 @@
-package modparser
+package dstparser
 
 import (
 	"github.com/stretchr/testify/assert"
