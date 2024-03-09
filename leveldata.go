@@ -199,10 +199,12 @@ return {
 }
 `
 
+// ToMasterLevelDataOverridesLua converts LevelDataOverrides to lua script
 func ToMasterLevelDataOverridesLua(overrides LevelDataOverrides) (string, error) {
 	return toLevelDataOverridesLua(masterLevelOverrides, overrides)
 }
 
+// ToCaveLevelDataOverridesLua converts LevelDataOverrides to lua script
 func ToCaveLevelDataOverridesLua(overrides LevelDataOverrides) (string, error) {
 	return toLevelDataOverridesLua(caveLevelOverrides, overrides)
 }
