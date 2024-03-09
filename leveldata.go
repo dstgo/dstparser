@@ -5,6 +5,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	lua "github.com/yuin/gopher-lua"
 	"text/template"
+	"unsafe"
 )
 
 type LevelOverrideItem struct {
@@ -46,10 +47,10 @@ type LevelDataOverrides struct {
 }
 
 // ParseLevelDataOverrides parses the leveldataoverrides.lua, returns LevelDataOverrides information
-func ParseLevelDataOverrides(luaScript string) (LevelDataOverrides, error) {
+func ParseLevelDataOverrides(luaScript []byte) (LevelDataOverrides, error) {
 	l := lua.NewState()
 	defer l.Close()
-	if err := l.DoString(luaScript); err != nil {
+	if err := l.DoString(unsafe.String(unsafe.SliceData(luaScript), len(luaScript))); err != nil {
 		return LevelDataOverrides{}, err
 	}
 

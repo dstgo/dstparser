@@ -10,7 +10,7 @@ import (
 func TestParseLevelDataOverridesCave(t *testing.T) {
 	bytes, err := os.ReadFile("testdata/cluster/leveldataoverride.cave.lua")
 	assert.Nil(t, err)
-	overrides, err := ParseLevelDataOverrides(string(bytes))
+	overrides, err := ParseLevelDataOverrides(bytes)
 	assert.Nil(t, err)
 
 	assert.NotEmpty(t, overrides.Id)
@@ -20,7 +20,7 @@ func TestParseLevelDataOverridesCave(t *testing.T) {
 func TestParseLevelDataOverridesMaster(t *testing.T) {
 	bytes, err := os.ReadFile("testdata/cluster/leveldataoverride.master.lua")
 	assert.Nil(t, err)
-	overrides, err := ParseLevelDataOverrides(string(bytes))
+	overrides, err := ParseLevelDataOverrides(bytes)
 	assert.Nil(t, err)
 
 	assert.NotEmpty(t, overrides.Id)
@@ -30,7 +30,7 @@ func TestParseLevelDataOverridesMaster(t *testing.T) {
 func TestToMasterLevelDataOverridesLua(t *testing.T) {
 	bytes, err := os.ReadFile("testdata/cluster/leveldataoverride.cave.lua")
 	assert.Nil(t, err)
-	overrides, err := ParseLevelDataOverrides(string(bytes))
+	overrides, err := ParseLevelDataOverrides(bytes)
 	assert.Nil(t, err)
 
 	assert.NotEmpty(t, overrides.Id)
@@ -46,7 +46,7 @@ func TestToMasterLevelDataOverridesLua(t *testing.T) {
 func TestToCaveLevelDataOverridesLua(t *testing.T) {
 	bytes, err := os.ReadFile("testdata/cluster/leveldataoverride.cave.lua")
 	assert.Nil(t, err)
-	overrides, err := ParseLevelDataOverrides(string(bytes))
+	overrides, err := ParseLevelDataOverrides(bytes)
 	assert.Nil(t, err)
 
 	assert.NotEmpty(t, overrides.Id)
