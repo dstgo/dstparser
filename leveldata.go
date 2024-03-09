@@ -200,32 +200,32 @@ return {
 `
 
 // ToMasterLevelDataOverridesLua converts LevelDataOverrides to lua script
-func ToMasterLevelDataOverridesLua(overrides LevelDataOverrides) (string, error) {
+func ToMasterLevelDataOverridesLua(overrides LevelDataOverrides) ([]byte, error) {
 	return toLevelDataOverridesLua(masterLevelOverrides, overrides)
 }
 
 // ToCaveLevelDataOverridesLua converts LevelDataOverrides to lua script
-func ToCaveLevelDataOverridesLua(overrides LevelDataOverrides) (string, error) {
+func ToCaveLevelDataOverridesLua(overrides LevelDataOverrides) ([]byte, error) {
 	return toLevelDataOverridesLua(caveLevelOverrides, overrides)
 }
 
-func toLevelDataOverridesLua(tmpl string, val any) (string, error) {
+func toLevelDataOverridesLua(tmpl string, val any) ([]byte, error) {
 	var data map[string]any
 	if err := mapstructure.Decode(val, &data); err != nil {
-		return "", err
+		return nil, err
 	}
 	templ, err := template.New("leveloverrides").
 		Funcs(map[string]any{"t": t}).
 		Parse(tmpl)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	buffer := bytes.NewBuffer(nil)
 	if err := templ.Execute(buffer, data); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return buffer.String(), nil
+	return buffer.Bytes(), nil
 }

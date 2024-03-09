@@ -40,7 +40,7 @@ func TestToMasterLevelDataOverridesLua(t *testing.T) {
 	assert.Nil(t, err)
 	t.Log(err)
 
-	fmt.Println(overridesLua)
+	fmt.Println(string(overridesLua))
 }
 
 func TestToCaveLevelDataOverridesLua(t *testing.T) {
@@ -56,5 +56,5 @@ func TestToCaveLevelDataOverridesLua(t *testing.T) {
 	assert.Nil(t, err)
 	t.Log(err)
 
-	fmt.Println(overridesLua)
+	fmt.Println(string(overridesLua))
 }
