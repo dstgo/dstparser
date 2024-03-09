@@ -7,6 +7,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 	"strings"
 	"text/template"
+	"unsafe"
 )
 
 type ModInfo struct {
@@ -76,12 +77,12 @@ type ModOverRideOption struct {
 }
 
 // ParseModInfo returns the parsed modinfo from lua script
-func ParseModInfo(luaScript string) (ModInfo, error) {
+func ParseModInfo(luaScript []byte) (ModInfo, error) {
 	return ParseModInfoWithEnv(luaScript, "", "")
 }
 
 // ParseModInfoWithEnv parse mod info from lua script with mod environment variables.
-func ParseModInfoWithEnv(luaScript, folderName, locale string) (ModInfo, error) {
+func ParseModInfoWithEnv(luaScript []byte, folderName, locale string) (ModInfo, error) {
 	l := lua.NewState()
 	defer l.Close()
 
@@ -96,7 +97,7 @@ func ParseModInfoWithEnv(luaScript, folderName, locale string) (ModInfo, error) 
 	l.SetGlobal("ChooseTranslationTable", ChooseTranslationTable(l, locale))
 
 	// parse script
-	if err := l.DoString(luaScript); err != nil {
+	if err := l.DoString(unsafe.String(unsafe.SliceData(luaScript), len(luaScript))); err != nil {
 		return ModInfo{}, err
 	}
 
@@ -257,11 +258,11 @@ func parseModOptionItems(optTable *lua.LTable) []ModOptionItem {
 }
 
 // ParseModOverrides returns the mod override options from modoverrides.lua
-func ParseModOverrides(luaScript string) ([]ModOverRideOption, error) {
+func ParseModOverrides(luaScript []byte) ([]ModOverRideOption, error) {
 	l := lua.NewState()
 	defer l.Close()
 
-	if err := l.DoString(luaScript); err != nil {
+	if err := l.DoString(unsafe.String(unsafe.SliceData(luaScript), len(luaScript))); err != nil {
 		return nil, err
 	}
 	var options []ModOverRideOption

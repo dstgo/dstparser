@@ -22,7 +22,7 @@ func TestParseModInfoLua(t *testing.T) {
 		}
 		assert.Nil(t, err)
 
-		modInfo, err := ParseModInfoWithEnv(string(bytes), fmt.Sprintf("workshop-%s", entry.Name()), "zh")
+		modInfo, err := ParseModInfoWithEnv(bytes, fmt.Sprintf("workshop-%s", entry.Name()), "zh")
 		t.Log(modInfo.Name, modInfo.Author, modInfo.Version)
 	}
 }
@@ -31,7 +31,7 @@ func TestParseModOverridesLua(t *testing.T) {
 	bytes, err := os.ReadFile("testdata/cluster/modoverrides.lua")
 	assert.Nil(t, err)
 
-	overrides, err := ParseModOverrides(string(bytes))
+	overrides, err := ParseModOverrides(bytes)
 	assert.Nil(t, err)
 
 	t.Log(len(overrides))
@@ -41,7 +41,7 @@ func TestFromModOverrideOption(t *testing.T) {
 	bytes, err := os.ReadFile("testdata/cluster/modoverrides.lua")
 	assert.Nil(t, err)
 
-	overrides, err := ParseModOverrides(string(bytes))
+	overrides, err := ParseModOverrides(bytes)
 	assert.Nil(t, err)
 
 	overrideLua, err := ToModOverrideLua(overrides)
