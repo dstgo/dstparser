@@ -1,4 +1,4 @@
-module github.com/dstgo/parser
+module github.com/dstgo/dstparser
 
 go 1.22
 
