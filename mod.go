@@ -300,7 +300,7 @@ func ParseModOverrides(luaScript string) ([]ModOverRideOption, error) {
 	return options, nil
 }
 
-const modOverrideTmpl = `return {   {{ range $index, $option := . }}
+const modOverrideTmpl = `return {  {{ range $index, $option := . }}
     ["{{ $option.Id }}"] = {
         ["enabled"] = {{ $option.Enabled }},
         ["configuration_options"] = { {{ range $index, $item := $option.Items }}
@@ -319,19 +319,19 @@ func t(val any) (any, error) {
 
 // ToModOverrideLua return the lua representation of the modOverride options,
 // the format is same as modoverride.lua
-func ToModOverrideLua(options []ModOverRideOption) (string, error) {
+func ToModOverrideLua(options []ModOverRideOption) ([]byte, error) {
 	templ := template.New("modoverride").Funcs(map[string]any{
 		"t": t,
 	})
 
 	templ, err := templ.Parse(modOverrideTmpl)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	buffer := bytes.NewBuffer(nil)
 	if err := templ.Execute(buffer, options); err != nil {
-		return "", err
+		return nil, err
 	}
-	return buffer.String(), nil
+	return buffer.Bytes(), nil
 }
