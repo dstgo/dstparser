@@ -5,7 +5,7 @@
 ## install
 
 ```bash
-go get github.com/dstgo/parser@latest
+go get github.com/dstgo/dstparser@latest
 ```
 
 ## usage
